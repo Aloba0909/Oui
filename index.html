@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Student Result Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        /* --- CSS Styles from the "good styles" HTML (HTML 2) --- */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: rgba(255, 255, 255, 0.8);
+            --card-border: 1px solid rgba(255, 255, 255, 0.2);
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --neumorphic-shadow: 5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff;
+            --light-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+            --dark-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+            --text-color: #343a40;
+            --highlight-color: #ffc107;
+            --error-color: #dc3545;
+            --transition-speed: 0.3s;
+            --spinner-color: var(--primary-color);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflowclipmarginX-: hidden;
+            transition: background-color var(--transition-speed), color var(--transition-speed);
+        }
+
+        body.dark-theme {
+            --background-color: #343a40;
+            --text-color: #f8f9fa;
+            --card-background: rgba(0, 0, 0, 0.8);
+            --card-border: 1px solid rgba(0, 0, 0, 0.2);
+            --neumorphic-shadow: 5px 5px 10px #292e34, -5px -5px 10px #3f464c;
+            --light-shadow: 5px 5px 15px rgba(255, 255, 255, 0.1);
+            --dark-shadow: 5px 5px 15px rgba(255, 255, 255, 0.3);
+        }
+
+
+        #header {
+            text-align: center;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        #header h1 {
+            margin-bottom: 0.2em;
+        }
+
+        #header p {
+            margin-top: 0.2em;
+            color: var(--secondary-color);
+            font-size: 0.9em;
+        }
+        #header button {
+            margin-left: 10px; /* Spacing for buttons in header */
+        }
+
+
+        #app-container {
+            position: relative;
+            width: 95%;
+            max-width: 1200px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: var(--neumorphic-shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #search-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            #search-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #search-container > * {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+
+
+        #search-container > * {
+            margin-bottom: 0;
+        }
+        #searchInput {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: inset var(--dark-shadow);
+        }
+
+        #searchType, #sortType, #filterType {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            background-color: white;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+            background-repeat: no-repeat;
+            background-position-x: 100%;
+            background-position-y: 5px;
+            padding-right: 25px;
+
+        }
+        #searchType:focus, #sortType:focus, #filterType:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        #searchButton{
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+            position: relative;
+        }
+        #searchButton:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+
+        #results {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        #resultsGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            opacity: 1;
+            transition: opacity var(--transition-speed);
+        }
+
+        #resultsGrid.loading {
+            opacity: 0.5;
+        }
+
+        #resultCard {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            padding: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+
+        }
+        #resultCard:hover {
+            transform: translateY(-5px) rotateY(10deg);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .result-table th, .result-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .result-table th {
+            background-color: #f2f2f2;
+        }
+
+        #themeSwitcher {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity var(--transition-speed);
+        }
+
+        #themeSwitcher:hover {
+            opacity: 1;
+        }
+
+
+        #particles-js {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* --- Sign-in Form Styles --- */
+        #signInContainer {
+            width: 350px;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        #signInContainer h2 {
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .signInInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+        }
+
+        .signInButton, #signOutButton, #homeButton, #addCommentButton, .signUpButton, #forgotPasswordButton, #recoverPasswordButton, #backToSignInButton, #addNewUserButton, #deleteUserButton, .deleteUserButtonAdmin {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+            margin-top: 10px; /* Added margin to separate buttons more */
+        }
+
+        .signInButton:hover, #signOutButton:hover, #homeButton:hover, #addCommentButton:hover, .signUpButton:hover, #forgotPasswordButton:hover, #recoverPasswordButton:hover, #backToSignInButton:hover, #addNewUserButton:hover, #deleteUserButton:hover, .deleteUserButtonAdmin:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+
+        #errorMessage, #emptyResultsMessage, #loginError, #signupError, #signupSuccess, #verificationError, #notClassError, #forgotPasswordError, #adminError, #newUserError, #newUserSuccess, #deleteUserError, #deleteUserSuccess, #userSearchError, #deletedUserError {
+            color: var(--error-color);
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+        }
+        #signupSuccess, #newUserSuccess, #deleteUserSuccess {
+            color: green;
+        }
+        #forgotPasswordLink {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            text-align: center;
+        }
+        #forgotPasswordLink a {
+            color: var(--primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #forgotPasswordLink a:hover {
+            text-decoration: underline;
+        }
+        #forgotPasswordContainer, #adminSection {
+            display: none; /* Hidden by default */
+        }
+        #adminSection {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            width: 100%;
+        }
+        #addNewUserContainer, #deleteUserContainer {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--spinner-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity var(--transition-speed);
+        }
+
+        .button-with-spinner.loading .spinner {
+            opacity: 1;
+        }
+        .button-with-spinner.loading span {
+            visibility: hidden;
+        }
+
+        /* --- Comments Section Styles --- */
+        #commentsSection {
+            margin-top: 30px;
+            width: 100%;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        #commentInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+            resize: vertical; /* Allow vertical resizing */
+        }
+
+        #commentsDisplay {
+            margin-top: 15px;
+        }
+
+        .comment {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: var(--card-border);
+        }
+
+        .comment-author {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .no-comments-message {
+            font-style: italic;
+            color: var(--secondary-color);
+        }
+
+
+        #footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--secondary-color);
+            font-size: 0.85em;
+            border-top: 1px solid #eee;
+        }
+
+        #footer p {
+            margin: 0.5em 0;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 0.5em;
+        }
+
+        .contact-info > div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- Message Center Styles from HTML 1 (Modified for inline display) --- */
+        #messageCenter {
+            margin-top: 30px;
+            width: 100%;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        #messageUserSearchContainer {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            position: relative; /* For positioning search results */
+        }
+
+        #messageUserSearch {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+        }
+        #messageUserSearchResults {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: white;
+            border: 1px solid #ced4da;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none; /* Hidden by default */
+        }
+
+        .search-result-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background-color: #f0f0f0;
+        }
+
+
+        #messageSendButton {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+             /* display: none; Hidden initially */
+        }
+
+        #messageSendButton:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+        #messageInputArea {
+            margin-bottom: 15px;
+             /* display: none; Hidden initially */
+            display: block;
+        }
+
+        #messageText {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        #userMessagesSection { /* New section for displaying user messages */
+            margin-top: 30px;
+            width: 100%;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            display: none; /* Hidden by default, shown after login */
+        }
+
+        #userMessagesDisplay { /* Container for displaying messages, similar to commentsDisplay */
+            margin-top: 15px;
+        }
+
+        /* --- Admin User Management Styles --- */
+        #userManagementSection {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+        }
+
+        #userSearchContainerAdmin {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #userSearchInputAdmin {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            box-shadow: inset var(--light-shadow);
+        }
+
+        #userSearchButtonAdmin {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+        }
+
+        #userSearchButtonAdmin:hover {
+            background-color: darken(var(--primary-color), 10%);
+        }
+
+        #userListDisplayAdmin {
+            margin-top: 15px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-details {
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<header id="header" role="banner">
+    <div>
+        <h1>Omderman University</h1>
+        <p>Mechanical Engineering - First Grade</p>
+    </div>
+    <div>
+        <button id="homeButton" onclick="goToHome()" style="display:none;">Home</button>
+        <button id="signOutButton" onclick="signOut()" style="display:none;">Sign Out</button>
+    </div>
+
+</header>
+
+<div id="app-container">
+    <div id="particles-js"></div>
+    <div id="themeSwitcher" onclick="toggleTheme()" title="Toggle Theme" aria-label="Toggle between light and dark theme"><i class="fas fa-moon"></i></div>
+
+    <!-- Sign-in Container (initially visible) -->
+    <div id="signInContainer">
+        <h2>Sign In</h2>
+        <div id="loginError" role="alert" aria-live="assertive"></div>
+        <div id="fullNameError" role="alert" aria-live="assertive"></div>
+        <div id="adminError" role="alert" aria-live="assertive"></div>
+        <div id="deletedUserError" role="alert" aria-live="assertive"></div>
+        <input type="text" id="usernameInput" placeholder="Username" class="signInInput" aria-label="Username">
+        <input type="password" id="passwordInput" placeholder="Password" class="signInInput" aria-label="Password">
+        <button class="signInButton" onclick="signIn()">Sign In</button>
+        <div id="forgotPasswordLink"><a href="#" onclick="showForgotPasswordForm()">Forgot Password?</a></div>
+
+        <div id="forgotPasswordContainer">
+            <h2>Forgot Password</h2>
+            <div id="forgotPasswordError" role="alert" aria-live="assertive"></div>
+            <input type="text" id="forgotPasswordFullName" placeholder="Enter Your Full Name" class="signInInput" aria-label="Full Name for Password Recovery">
+            <button id="recoverPasswordButton" onclick="recoverPassword()">Recover Password</button>
+            <button id="backToSignInButton" onclick="hideForgotPasswordForm()">Back to Sign In</button>
+        </div>
+
+
+        <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 20px;">
+            <h2>Sign Up</h2>
+            <div id="signupError" role="alert" aria-live="assertive"></div>
+            <div id="signupSuccess" role="alert" aria-live="assertive"></div>
+            <div id="verificationError" role="alert" aria-live="assertive"></div>
+            <div id="notClassError" role="alert" aria-live="assertive"></div>
+
+            <p id="verificationQuestion"></p>
+            <input type="text" id="verificationAnswer" placeholder="Your Answer" class="signInInput" aria-label="Verification Answer">
+
+            <input type="text" id="newUsernameInput" placeholder="New Username" class="signInInput" aria-label="New Username">
+            <input type="password" id="newPasswordInput" placeholder="New Password" class="signInInput" aria-label="New Password">
+            <button class="signUpButton" onclick="signUp()">Sign Up</button>
+        </div>
+
+        <p style="margin-top: 20px;">For support, call call center: <a href="tel:1922">1922</a></p>
+    </div>
+
+
+    <!-- Main App Content (initially hidden) -->
+    <div id="mainAppContent" style="display:none;">
+        <h1>Student Result Viewer</h1>
+        <div id="search-container">
+            <label for="searchType" id="searchTypeLabel" hidden>Search by</label>
+            <select id="searchType" aria-labelledby="searchTypeLabel">
+                <option value="name">Name</option>
+                <option value="seatNumber">Seat Number</option>
+            </select>
+
+            <label for="searchInput" id="searchInputLabel" hidden>Enter search term</label>
+            <input type="text" id="searchInput" placeholder="Enter name or seat number" aria-labelledby="searchInputLabel" aria-label="Search Input">
+
+            <button id="searchButton" onclick="searchResult()" class="button-with-spinner" title="Search Results" aria-label="Search">
+                <span>Search</span>
+                <div class="spinner"></div>
+            </button>
+        </div>
+        <!-- Error and Empty Results message containers -->
+        <div id="errorMessage" role="alert" aria-live="assertive"></div>
+        <div id="emptyResultsMessage">No students found matching your criteria.</div>
+
+        <div id="results" role="main">
+            <div id="resultsGrid" aria-live="polite" aria-busy="false">
+                <!-- Result cards will be added here -->
+            </div>
+        </div>
+
+        <section id="commentsSection">
+            <h3>Comments</h3>
+            <div id="commentsDisplay">
+                <p id="noCommentsYet" class="no-comments-message">No comments yet. Be the first to comment!</p>
+                <!-- Comments will be loaded here -->
+            </div>
+            <textarea id="commentInput" placeholder="Add your comment here" aria-label="Comment Input"></textarea>
+            <button id="addCommentButton" onclick="addComment()">Add Comment</button>
+        </section>
+
+        <!-- Message Center Section - now inline like comments -->
+        <section id="messageCenter">
+            <h3>Message Center</h3>
+            <div id="messageUserSearchContainer">
+                <input type="text" id="messageUserSearch" placeholder="Enter recipient's name or 'Admin'" aria-label="Search User to Message">
+                <div id="messageUserSearchResults"></div>
+            </div>
+
+            <div id="messageInputArea">
+                <textarea id="messageText" placeholder="Enter your message here" aria-label="Message Text"></textarea>
+                <button id="sendMessageButton" class="signInButton" onclick="sendMessage()">Send Message</button>
+            </div>
+        </section>
+
+        <!-- User Messages Display Section - like comments section, shown after login -->
+        <section id="userMessagesSection">
+            <h3>Your Messages</h3>
+            <div id="userMessagesDisplay">
+                <p id="noMessagesYet" class="no-comments-message">No messages yet.</p>
+                <!-- Messages for the logged-in user will be displayed here -->
+            </div>
+        </section>
+
+        <!-- Admin Section -->
+        <section id="adminSection">
+            <h2>Admin Page</h2>
+            <div id="adminError" role="alert" aria-live="assertive"></div>
+            <div id="addNewUserContainer">
+                <h3>Add New User</h3>
+                <div id="newUserError" role="alert" aria-live="assertive"></div>
+                <div id="newUserSuccess" role="alert" aria-live="assertive"></div>
+                <input type="text" id="newAdminUsernameInput" placeholder="New Username" class="signInInput" aria-label="New Admin Username">
+                <input type="password" id="newAdminPasswordInput" placeholder="New Password" class="signInInput" aria-label="New Admin Password">
+                <button id="addNewUserButton" onclick="addNewUser()">Add New User</button>
+            </div>
+
+            <div id="deleteUserContainer">
+                <h3>Delete User</h3>
+                <div id="deleteUserError" role="alert" aria-live="assertive"></div>
+                <div id="deleteUserSuccess" role="alert" aria-live="assertive"></div>
+                <input type="text" id="deleteUsernameInput" placeholder="Username to Delete" class="signInInput" aria-label="Username to Delete">
+                <button id="deleteUserButton" onclick="deleteUser()">Delete User</button>
+            </div>
+
+            <div id="userManagementSection">
+                <h3>Manage Users</h3>
+                <div id="userSearchError" role="alert" aria-live="assertive"></div>
+                <div id="userSearchContainerAdmin">
+                    <input type="text" id="userSearchInputAdmin" placeholder="Search users by name or username" aria-label="Search Users">
+                    <button id="userSearchButtonAdmin" onclick="searchUsersAdmin()">Search</button>
+                </div>
+                <div id="userListDisplayAdmin">
+                    <!-- User list will be displayed here -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<footer id="footer" role="contentinfo">
+    <p>Creator: Ibrahim Amir</p>
+    <div class="contact-info">
+        <div><i class="far fa-envelope"></i> <a href="mailto:abrahimamiradm@gmail.com">abrahimamiradm@gmail.com</a></div>
+        <div><i class="fas fa-phone"></i> <a href="tel:+00249925579927">00249925579927</a></div>
+    </div>
+    <p>For Contact</p>
+    <p>If result is wrong, call call center: 1922</p>
+</footer>
+
+<script defer src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script>
+    /* --- JavaScript from the "good styles" HTML (HTML 2) --- */
+    const studentData = [
+         { "Seat No.": 1, "Name": "Alice Johnson", "Math": "A", "Science": "B", "History": "C", "English": "A", "Art": "D", "Geography": "B", "Physics": "A", "Chemistry": "C", "Biology": "B", "Music": "A" },
+        { "Seat No.": 2, "Name": "Bob Smith", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "D", "Biology": "A", "Music": "C" },
+        { "Seat No.": 3, "Name": "Charlie Brown", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "A", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 4, "Name": "David Williams", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 5, "Name": "Emma Jones", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 6, "Name": "Frank Miller", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 7, "Name": "Grace Davis", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 8, "Name": "Henry Garcia", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 9, "Name": "Isabella Rodriguez", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 10, "Name": "Jack Martinez", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 11, "Name": "Karen Hernandez", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 12, "Name": "Liam Lopez", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 13, "Name": "Mia Gonzalez", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 14, "Name": "Noah Wilson", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 15, "Name": "Olivia Anderson", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 16, "Name": "Paul Thomas", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 17, "Name": "Quinn Jackson", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 18, "Name": "Ryan White", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 19, "Name": "Sophia Harris", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 20, "Name": "Tyler Clark", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 21, "Name": "Uma Lewis", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 22, "Name": "Victor Lee", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 23, "Name": "Wendy Walker", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 24, "Name": "Xavier Hall", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 25, "Name": "Yara Young", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 26, "Name": "Zachary Allen", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 27, "Name": "Amy King", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 28, "Name": "Benjamin Wright", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 29, "Name": "Chloe Scott", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 30, "Name": "Daniel Green", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+         { "Seat No.": 31, "Name": "Ella Adams", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 32, "Name": "Finn Baker", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 33, "Name": "Grace Nelson", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 34, "Name": "Henry Carter", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 35, "Name": "Ivy Mitchell", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 36, "Name": "Jack Perez", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 37, "Name": "Katie Roberts", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 38, "Name": "Leo Turner", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 39, "Name": "Mia Phillips", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 40, "Name": "Noah Campbell", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 41, "Name": "Olivia Parker", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 42, "Name": "Peter Evans", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 43, "Name": "Quinn Edwards", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 44, "Name": "Ryan Collins", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 45, "Name": "Sofia Stewart", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 46, "Name": "Tyler Sanchez", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 47, "Name": "Uma Morris", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 48, "Name": "Victor Rogers", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" },
+        { "Seat No.": 49, "Name": "Wendy Reed", "Math": "A", "Science": "B", "History": "C", "English": "D", "Art": "B", "Geography": "A", "Physics": "B", "Chemistry": "C", "Biology": "A", "Music": "D" },
+        { "Seat No.": 50, "Name": "Xavier Cook", "Math": "B", "Science": "A", "History": "D", "English": "C", "Art": "A", "Geography": "B", "Physics": "A", "Chemistry": "D", "Biology": "B", "Music": "C" },
+        { "Seat No.": 51, "Name": "Yara Morgan", "Math": "C", "Science": "D", "History": "A", "English": "B", "Art": "D", "Geography": "C", "Physics": "D", "Chemistry": "A", "Biology": "C", "Music": "B" },
+        { "Seat No.": 52, "Name": "Zachary Bell", "Math": "D", "Science": "C", "History": "B", "English": "A", "Art": "C", "Geography": "D", "Physics": "C", "Chemistry": "B", "Biology": "D", "Music": "A" }
+    ];
+
+
+    let currentTheme = 'light';
+    let searchDebounceTimeout;
+    let isResultsLoading = false;
+    let isSignedIn = false;
+    let currentUsername = "";
+    let comments = JSON.parse(localStorage.getItem('studentComments') || '[]');
+    let messages = JSON.parse(localStorage.getItem('messages') || []);
+    let selectedRecipient = null;
+    let loginFailed = false;
+    let isAdmin = false;
+    let allUsers = [];
+    let filteredUsersAdmin = [];
+
+    // Deleted Students Tracking
+    let deletedStudentIdentifiers = JSON.parse(localStorage.getItem('deletedStudents') || '[]');
+
+    // Verification variables
+    let verificationFirstNameAnswer = [];
+
+
+    // DOM element variables
+    const themeSwitcher = document.getElementById('themeSwitcher');
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const resultsDiv = document.getElementById('results');
+    const errorMessage = document.getElementById('errorMessage');
+    const emptyResultsMessage = document.getElementById('emptyResultsMessage');
+    const signInContainer = document.getElementById('signInContainer');
+    const mainAppContent = document.getElementById('mainAppContent');
+    const loginError = document.getElementById('loginError');
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const signOutButton = document.getElementById('signOutButton');
+    const homeButton = document.getElementById('homeButton');
+    const commentsDisplay = document.getElementById('commentsDisplay');
+    const commentInput = document.getElementById('commentInput');
+    const noCommentsYet = document.getElementById('noCommentsYet');
+    const newUsernameInput = document.getElementById('newUsernameInput');
+    const newPasswordInput = document.getElementById('newPasswordInput');
+    const signupError = document.getElementById('signupError');
+    const signupSuccess = document.getElementById('signupSuccess');
+    const verificationQuestionElement = document.getElementById('verificationQuestion');
+    const verificationAnswerInput = document.getElementById('verificationAnswer');
+    const verificationErrorElement = document.getElementById('verificationError');
+    const notClassErrorElement = document.getElementById('notClassError');
+    const fullNameErrorElement = document.getElementById('fullNameError');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const forgotPasswordContainer = document.getElementById('forgotPasswordContainer');
+    const forgotPasswordFullNameInput = document.getElementById('forgotPasswordFullName');
+    const forgotPasswordError = document.getElementById('forgotPasswordError');
+    const adminSection = document.getElementById('adminSection');
+    const adminErrorElement = document.getElementById('adminError');
+    const newAdminUsernameInput = document.getElementById('newAdminUsernameInput');
+    const newAdminPasswordInput = document.getElementById('newAdminPasswordInput');
+    const newUserErrorElement = document.getElementById('newUserError');
+    const newUserSuccessElement = document.getElementById('newUserSuccess');
+    const deleteUserErrorElement = document.getElementById('deleteUserError');
+    const deleteUserSuccessElement = document.getElementById('deleteUserSuccess');
+    const deleteUsernameInput = document.getElementById('deleteUsernameInput');
+    const userSearchInputAdmin = document.getElementById('userSearchInputAdmin');
+    const userListDisplayAdmin = document.getElementById('userListDisplayAdmin');
+    const userSearchErrorElement = document.getElementById('userSearchError');
+    const deletedUserError = document.getElementById('deletedUserError');
+
+
+    // Message center DOM elements
+    const messageUserSearchInput = document.getElementById('messageUserSearch');
+    const messageUserSearchResultsDiv = document.getElementById('messageUserSearchResults');
+    const messageInputAreaDiv = document.getElementById('messageInputArea');
+    const messageTextInput = document.getElementById('messageText');
+    const sendMessageButton = document.getElementById('sendMessageButton');
+
+    // User messages display elements
+    const userMessagesSection = document.getElementById('userMessagesSection');
+    const userMessagesDisplay = document.getElementById('userMessagesDisplay');
+    const noMessagesYetElement = document.getElementById('noMessagesYet');
+
+
+    function toggleTheme() {
+        currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.body.classList.toggle('dark-theme', currentTheme === 'dark');
+        themeSwitcher.querySelector('i').classList.toggle('fa-moon', currentTheme === 'light');
+        themeSwitcher.querySelector('i').classList.toggle('fa-sun', currentTheme === 'dark');
+        localStorage.setItem('theme', currentTheme);
+    }
+
+    function applyThemeFromLocalStorage() {
+        const storedTheme = localStorage.getItem('theme');
+        if (storedTheme === 'dark') {
+            toggleTheme();
+        }
+    }
+
+    function loadComments() {
+        commentsDisplay.innerHTML = '';
+        if (comments.length === 0) {
+            noCommentsYet.style.display = 'block';
+        } else {
+            noCommentsYet.style.display = 'none';
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.classList.add('comment');
+                commentDiv.innerHTML = `<span class="comment-author">${comment.username}:</span> ${comment.text}`;
+                commentsDisplay.appendChild(commentDiv);
+            });
+        }
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        particlesJS.load('particles-js', 'particles.json', function() {
+            console.log('callback - particles.js config loaded');
+        });
+        applyThemeFromLocalStorage();
+        searchInput.addEventListener('keyup', debounceSearch);
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                searchResult();
+            }
+        });
+        loadComments();
+        generateVerificationQuestion();
+
+        messageUserSearchInput.addEventListener('input', handleMessageUserSearchInput);
+        userSearchInputAdmin.addEventListener('input', searchUsersAdmin);
+    });
+
+
+    function searchResult(event) {
+        if (!isSignedIn) {
+            alert("Please sign in to view results.");
+            return;
+        }
+
+        searchInput.value = searchInput.value.trim();
+
+
+        const searchType = document.getElementById('searchType').value;
+        const searchTerm = searchInput.value.toLowerCase();
+        resultsGrid.innerHTML = '';
+        errorMessage.style.display = 'none';
+        emptyResultsMessage.style.display = 'none';
+        resultsDiv.style.display = 'none';
+        setLoadingState(true);
+
+        let foundStudents = [...studentData];
+
+        if (searchType === 'name' && searchTerm) {
+            foundStudents = foundStudents.filter(student => student.Name.toLowerCase().includes(searchTerm));
+        } else if (searchType === 'seatNumber' && searchTerm) {
+            const seatNumber = parseInt(searchTerm, 10);
+            if (!isNaN(seatNumber)) {
+                foundStudents = foundStudents.filter(student => student["Seat No."] === seatNumber);
+            } else {
+                setLoadingState(false);
+                errorMessage.textContent = "Please enter a valid seat number.";
+                errorMessage.style.display = 'block';
+                resultsDiv.style.display = 'none';
+                return;
+            }
+        }
+
+
+        setTimeout(() => {
+            setLoadingState(false);
+
+            if (foundStudents.length > 0) {
+                resultsDiv.style.display = 'block';
+                foundStudents.forEach(student => {
+                    const card = createStudentCard(student);
+                    resultsGrid.appendChild(card);
+                });
+            } else {
+                emptyResultsMessage.style.display = 'block';
+                resultsDiv.style.display = 'none';
+
+            }
+        }, 300);
+    }
+
+    function createStudentCard(student) {
+        const card = document.createElement('div');
+        card.id = 'resultCard';
+        let tableContent = '<table class="result-table">';
+        for (const key in student) {
+            tableContent += `<tr><th>${key}</th><td>${student[key]}</td></tr>`;
+        }
+        tableContent += '</table>';
+        card.innerHTML = tableContent;
+        return card;
+    }
+
+
+    function debounce(func, delay) {
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(searchDebounceTimeout);
+            searchDebounceTimeout = setTimeout(() => func.apply(context, args), delay);
+        }
+    }
+
+    const debounceSearch = debounce(searchResult, 300);
+
+
+    function setLoadingState(loading) {
+        isResultsLoading = loading;
+        searchButton.classList.toggle('loading', loading);
+        resultsGrid.classList.toggle('loading', loading);
+        searchButton.disabled = loading;
+    }
+
+
+    function signIn() {
+        console.log('signIn function called'); //debug
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        loginError.style.display = 'none';
+        fullNameErrorElement.style.display = 'none';
+        forgotPasswordLink.style.display = 'none';
+        adminErrorElement.style.display = 'none';
+        deletedUserError.style.display = 'none';
+        loginFailed = false;
+        isAdmin = false;
+
+        if (username === 'Admin' && password === '123') {
+            isAdmin = true;
+            isSignedIn = true;
+            currentUsername = 'Admin';
+            signInContainer.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            signOutButton.style.display = 'block';
+            homeButton.style.display = 'block';
+            adminSection.style.display = 'block';
+            userMessagesSection.style.display = 'block';
+            loadUserMessages();
+            displayAllUsersAdmin();
+            return;
+        }
+
+
+        const student = studentData.find(s => s.Name.split(' ')[0].toLowerCase() === username.toLowerCase()); // Find by first name
+        if (!password) {
+
+            if (student) {
+                const studentIdentifier = `Seat No: ${student["Seat No."]}`;
+                if (deletedStudentIdentifiers.includes(studentIdentifier)) {
+                    deletedUserError.textContent = "This student account has been deleted.";
+                    deletedUserError.style.display = 'block';
+                    return;
+                }
+                isSignedIn = true;
+                currentUsername = student.Name; // set currentUsername to full name for name-based login
+                signInContainer.style.display = 'none';
+                mainAppContent.style.display = 'block';
+                signOutButton.style.display = 'block';
+                homeButton.style.display = 'block';
+                userMessagesSection.style.display = 'block';
+                adminSection.style.display = 'none';
+                loadUserMessages();
+                return;
+            } else {
+                fullNameErrorElement.textContent = "Check your name and try again.";
+                fullNameErrorElement.style.display = 'block';
+                forgotPasswordLink.style.display = 'block';
+                loginFailed = true;
+                return;
+            }
+        }
+
+
+        let userFound = false;
+
+        const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const newUser = storedUsers.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+        if (newUser) {
+            userFound = true;
+            currentUsername = newUser.username; // set currentUsername to username for username/password login
+        } else if (student) { // Check student data if newUser not found
+             const studentIdentifier = `Seat No: ${student["Seat No."]}`;
+                if (deletedStudentIdentifiers.includes(studentIdentifier)) {
+                    deletedUserError.textContent = "This student account has been deleted.";
+                    deletedUserError.style.display = 'block';
+                    return;
+                }
+            if (String(student["Seat No."]) === password) {
+                userFound = true;
+                currentUsername = student.Name; // set currentUsername to full name for seat number/password login
+            }
+        }
+
+
+        if (userFound) {
+            isSignedIn = true;
+            signInContainer.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            signOutButton.style.display = 'block';
+            homeButton.style.display = 'block';
+            userMessagesSection.style.display = 'block';
+            adminSection.style.display = 'none';
+            loadUserMessages();
+        } else {
+            loginError.textContent = "Sign-in failed. Please check your Username and Password.";
+            loginError.style.display = 'block';
+            forgotPasswordLink.style.display = 'block';
+            loginFailed = true;
+        }
+    }
+
+    function signOut() {
+        isSignedIn = false;
+        currentUsername = "";
+        isAdmin = false;
+        signInContainer.style.display = 'block';
+        mainAppContent.style.display = 'none';
+        signOutButton.style.display = 'none';
+        homeButton.style.display = 'none';
+        userMessagesSection.style.display = 'none';
+        adminSection.style.display = 'none';
+        clearSearch();
+        hideForgotPasswordForm();
+        loginError.style.display = 'none';
+        forgotPasswordLink.style.display = 'none';
+        adminErrorElement.style.display = 'none';
+        newUserErrorElement.style.display = 'none';
+        newUserSuccessElement.style.display = 'none';
+        deleteUserErrorElement.style.display = 'none';
+        deleteUserSuccessElement.style.display = 'none';
+        deletedUserError.style.display = 'none';
+        userListDisplayAdmin.innerHTML = '';
+    }
+
+    function goToHome() {
+        clearSearch();
+    }
+
+    function clearSearch() {
+        searchInput.value = '';
+        resultsGrid.innerHTML = '';
+        resultsDiv.style.display = 'none';
+        errorMessage.style.display = 'none';
+        emptyResultsMessage.style.display = 'none';
+    }
+
+    function addComment() {
+        if (!isSignedIn || isAdmin) {
+            alert("Please sign in as a student to add a comment.");
+            return;
+        }
+        const commentText = commentInput.value.trim();
+        if (commentText) {
+            const newComment = {
+                username: currentUsername,
+                text: commentText
+            };
+            comments.push(newComment);
+            localStorage.setItem('studentComments', JSON.stringify(comments));
+            loadComments();
+            commentInput.value = '';
+        }
+    }
+
+    function generateVerificationQuestion() {
+        verificationErrorElement.style.display = 'none';
+        notClassErrorElement.style.display = 'none';
+        verificationQuestionElement.textContent = `Verification: Enter first name of any student from the class`;
+        verificationFirstNameAnswer = studentData.map(student => student.Name.split(' ')[0].toLowerCase());
+    }
+
+
+    function signUp() {
+        console.log('signUp function called'); //debug
+        const newUsername = newUsernameInput.value;
+        const newPassword = newPasswordInput.value;
+        const verificationAnswer = verificationAnswerInput.value.toLowerCase();
+
+        signupError.style.display = 'none';
+        signupSuccess.style.display = 'none';
+        verificationErrorElement.style.display = 'none';
+        notClassErrorElement.style.display = 'none';
+
+        if (!newUsername || !newPassword || !verificationAnswer) {
+            signupError.textContent = "Please fill in all fields.";
+            signupError.style.display = 'block';
+            return;
+        }
+
+        if (!verificationFirstNameAnswer.includes(verificationAnswer)) {
+            notClassErrorElement.textContent = "You are not registered in the class. Please contact support.";
+            notClassErrorElement.style.display = 'block';
+            generateVerificationQuestion();
+            return;
+        }
+
+
+        let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const usernameExists = storedUsers.some(user => user.username === newUsername);
+
+        if (usernameExists) {
+            signupError.textContent = "Username already taken. Please choose a different username.";
+            signupError.style.display = 'block';
+        } else {
+            storedUsers.push({ username: newUsername, password: newPassword });
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+            signupSuccess.textContent = "Signup successful. You can now sign in.";
+            signupSuccess.style.display = 'block';
+            newUsernameInput.value = '';
+            newPasswordInput.value = '';
+            verificationAnswerInput.value = '';
+            generateVerificationQuestion();
+        }
+    }
+
+
+    // ----------- Message Center Functions --------
+    function handleMessageUserSearchInput() {
+        const searchPrefix = messageUserSearchInput.value.trim().toLowerCase();
+        messageUserSearchResultsDiv.innerHTML = '';
+        messageUserSearchResultsDiv.style.display = 'none';
+        messageInputAreaDiv.style.display = 'none';
+        selectedRecipient = null;
+
+        let filteredUsers = [];
+        if (searchPrefix.toLowerCase() === 'admin') {
+            filteredUsers = [{ Name: 'Admin', username: 'Admin' }]; // Ensure Admin has username property
+        } else if (searchPrefix.length > 0) {
+            filteredUsers = studentData.filter(student =>
+                student.Name.toLowerCase().startsWith(searchPrefix)
+            );
+        }
+
+
+        if (filteredUsers.length > 0 || searchPrefix.toLowerCase() === 'admin') {
+            messageUserSearchResultsDiv.style.display = 'block';
+            if (searchPrefix.toLowerCase() === 'admin') {
+                 const resultItem = document.createElement('div');
+                    resultItem.classList.add('search-result-item');
+                    resultItem.textContent = 'Admin';
+                    resultItem.addEventListener('click', () => {
+                        messageUserSearchInput.value = 'Admin';
+                        messageUserSearchResultsDiv.style.display = 'none';
+                        messageInputAreaDiv.style.display = 'block';
+                        selectedRecipient = { Name: 'Admin', username: 'Admin' }; // Ensure Admin has username property
+                    });
+                    messageUserSearchResultsDiv.appendChild(resultItem);
+            }
+            filteredUsers.forEach(user => {
+                const resultItem = document.createElement('div');
+                resultItem.classList.add('search-result-item');
+                resultItem.textContent = user.Name;
+                resultItem.addEventListener('click', () => {
+                    selectedRecipient = user;
+                    messageUserSearchInput.value = user.Name;
+                    messageUserSearchResultsDiv.style.display = 'none';
+                    messageInputAreaDiv.style.display = 'block';
+
+                });
+                messageUserSearchResultsDiv.appendChild(resultItem);
+            });
+        }
+    }
+
+
+    function sendMessage() {
+        if (!isSignedIn) {
+            alert("Please sign in to send messages.");
+            return;
+        }
+        const messageText = messageTextInput.value.trim();
+
+        if (!selectedRecipient || !messageText) {
+            alert("Please select a recipient and enter a message.");
+            return;
+        }
+
+
+        let recipientIdentifier = selectedRecipient.username || selectedRecipient.Name;
+        console.log("Recipient Identifier:", recipientIdentifier); // Debugging
+
+        if (selectedRecipient.Name === 'Admin') {
+            recipientIdentifier = 'Admin';
+        }
+
+
+        const newMessage = {
+            sender: currentUsername,
+            recipient: recipientIdentifier,
+            text: messageText,
+            timestamp: new Date().toLocaleTimeString()
+        };
+
+        console.log("Sending Message:", newMessage); // Debugging log
+
+        if (!Array.isArray(messages)) {
+            messages = [];
+        }
+
+
+        messages.push(newMessage);
+        localStorage.setItem('messages', JSON.stringify(messages));
+
+
+        messageTextInput.value = '';
+        messageUserSearchInput.value = '';
+        messageUserSearchResultsDiv.style.display = 'none';
+        messageInputAreaDiv.style.display = 'none';
+        selectedRecipient = null;
+        alert("Message sent!");
+        loadUserMessages();
+    }
+
+
+    function loadUserMessages() {
+        userMessagesDisplay.innerHTML = '';
+        noMessagesYetElement.style.display = 'block';
+
+        console.log("Current Username in loadUserMessages:", currentUsername); // Debugging
+
+        const filteredMessages = messages.filter(msg => {
+            const isRecipientCurrentUser = msg.recipient.toLowerCase() === currentUsername.toLowerCase();
+            const isSenderCurrentUser = msg.sender.toLowerCase() === currentUsername.toLowerCase();
+            console.log("Message Recipient:", msg.recipient, "Message Sender:", msg.sender, "isRecipientCurrentUser:", isRecipientCurrentUser, "isSenderCurrentUser:", isSenderCurrentUser); // Debugging for each message
+            return isRecipientCurrentUser || isSenderCurrentUser;
+        });
+
+
+        if (isAdmin) {
+             // Add Admin messages only if isAdmin, and ensure no duplicates
+            const adminMessages = messages.filter(msg => msg.recipient === 'Admin');
+            adminMessages.forEach(adminMsg => {
+                if (!filteredMessages.includes(adminMsg)) { // Prevent duplicates
+                    filteredMessages.push(adminMsg);
+                }
+            });
+        }
+
+
+        if (filteredMessages.length > 0) {
+            noMessagesYetElement.style.display = 'none';
+            filteredMessages.forEach(message => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('comment');
+                const senderDisplay = message.sender === currentUsername ? 'You' : message.sender;
+                messageDiv.innerHTML = `<span class="comment-author">${senderDisplay} to ${message.recipient}:</span> ${message.text} <span style="float:right; font-size:0.8em; color:#777;">${message.timestamp}</span>`;
+                userMessagesDisplay.appendChild(messageDiv);
+            });
+        }
+    }
+
+    function showForgotPasswordForm() {
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('forgotPasswordLink').style.display = 'none';
+        document.getElementById('signInContainer').querySelector('h2').style.display = 'none';
+        document.querySelector('.signInButton').style.display = 'none';
+        document.getElementById('passwordInput').style.display = 'none';
+        document.getElementById('forgotPasswordContainer').style.display = 'block';
+    }
+
+    function hideForgotPasswordForm() {
+        document.getElementById('forgotPasswordContainer').style.display = 'none';
+        document.getElementById('loginError').style.display = 'none';
+        document.getElementById('forgotPasswordLink').style.display = 'block';
+        document.getElementById('signInContainer').querySelector('h2').style.display = 'block';
+        document.querySelector('.signInButton').style.display = 'block';
+        document.getElementById('passwordInput').style.display = 'block';
+        forgotPasswordError.style.display = 'none';
+        forgotPasswordFullNameInput.value = '';
+    }
+
+    function recoverPassword() {
+        const fullName = forgotPasswordFullNameInput.value.trim();
+        forgotPasswordError.style.display = 'none';
+
+        if (!fullName) {
+            forgotPasswordError.textContent = "Please enter your full name.";
+            forgotPasswordError.style.display = 'block';
+            return;
+        }
+
+        const student = studentData.find(s => s.Name.toLowerCase() === fullName.toLowerCase());
+        if (student) {
+            const studentIdentifier = `Seat No: ${student["Seat No."]}`;
+             if (deletedStudentIdentifiers.includes(studentIdentifier)) {
+                    deletedUserError.textContent = "This student account has been deleted.";
+                    deletedUserError.style.display = 'block';
+                    return;
+                }
+            isSignedIn = true;
+            currentUsername = student.Name;
+            signInContainer.style.display = 'none';
+            mainAppContent.style.display = 'block';
+            signOutButton.style.display = 'block';
+            homeButton.style.display = 'block';
+            userMessagesSection.style.display = 'block';
+            adminSection.style.display = 'none';
+            loadUserMessages();
+            alert("You are signed in using your name. Please remember to use your full name or username with password next time.");
+        } else {
+            forgotPasswordError.textContent = "Full name not found. Please check your full name.";
+            forgotPasswordError.style.display = 'block';
+        }
+    }
+
+    function addNewUser() {
+        const newUsername = newAdminUsernameInput.value.trim();
+        const newPassword = newAdminPasswordInput.value.trim();
+        newUserErrorElement.style.display = 'none';
+        newUserSuccessElement.style.display = 'none';
+
+        if (!newUsername || !newPassword) {
+            newUserErrorElement.textContent = "Please enter both username and password.";
+            newUserErrorElement.style.display = 'block';
+            return;
+        }
+
+        let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const usernameExists = storedUsers.some(user => user.username === newUsername);
+
+        if (usernameExists) {
+            newUserErrorElement.textContent = "Username already exists.";
+            newUserErrorElement.style.display = 'block';
+        } else {
+            storedUsers.push({ username: newUsername, password: newPassword });
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+            newUserSuccessElement.textContent = "New user added successfully.";
+            newUserSuccessElement.style.display = 'block';
+            newAdminUsernameInput.value = '';
+            newAdminPasswordInput.value = '';
+        }
+    }
+
+    function deleteUser() {
+        const usernameToDelete = deleteUsernameInput.value.trim();
+        deleteUserErrorElement.style.display = 'none';
+        deleteUserSuccessElement.style.display = 'none';
+
+        if (!usernameToDelete) {
+            deleteUserErrorElement.textContent = "Please enter the username to delete.";
+            deleteUserErrorElement.style.display = 'block';
+            return;
+        }
+        if (usernameToDelete === 'Admin') {
+            deleteUserErrorElement.textContent = "Cannot delete Admin user.";
+            deleteUserErrorElement.style.display = 'block';
+            return;
+        }
+
+        let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        const userIndex = storedUsers.findIndex(user => user.username === usernameToDelete);
+
+        if (userIndex === -1) {
+            deleteUserErrorElement.textContent = "User not found.";
+            deleteUserErrorElement.style.display = 'block';
+        } else {
+            storedUsers.splice(userIndex, 1);
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+            deleteUserSuccessElement.textContent = "User deleted successfully.";
+            deleteUserSuccessElement.style.display = 'block';
+            deleteUsernameInput.value = '';
+        }
+        displayAllUsersAdmin();
+    }
+
+    function displayAllUsersAdmin() {
+        userListDisplayAdmin.innerHTML = '';
+        allUsers = [];
+
+        studentData.forEach(student => {
+            const studentIdentifier = `Seat No: ${student["Seat No."]}`;
+            if (!deletedStudentIdentifiers.includes(studentIdentifier)) { // Hide deleted students
+                allUsers.push({
+                    type: 'student',
+                    name: student.Name,
+                    identifier: studentIdentifier
+                });
+            }
+        });
+
+        const storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+        storedUsers.forEach(user => {
+            allUsers.push({
+                type: 'newuser',
+                name: user.username,
+                identifier: 'Username',
+                username: user.username
+            });
+        });
+
+        filteredUsersAdmin = [...allUsers];
+        updateUserListDisplayAdmin(filteredUsersAdmin);
+    }
+
+    function updateUserListDisplayAdmin(users) {
+        userListDisplayAdmin.innerHTML = '';
+        if (users.length === 0) {
+            const noUsersMessage = document.createElement('p');
+            noUsersMessage.textContent = "No users found.";
+            userListDisplayAdmin.appendChild(noUsersMessage);
+            return;
+        }
+
+        users.forEach(user => {
+            const userItemDiv = document.createElement('div');
+            userItemDiv.classList.add('user-item');
+
+            const userDetailsDiv = document.createElement('div');
+            userDetailsDiv.classList.add('user-details');
+            userDetailsDiv.innerHTML = `<span class="user-name">${user.name}</span> <span class="user-identifier">(${user.identifier})</span>`;
+
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.classList.add('deleteUserButtonAdmin');
+            deleteButton.onclick = () => deleteUserAdmin(user);
+
+            userItemDiv.appendChild(userDetailsDiv);
+            userItemDiv.appendChild(deleteButton);
+            userListDisplayAdmin.appendChild(userItemDiv);
+        });
+    }
+
+
+    function searchUsersAdmin() {
+        const searchTerm = userSearchInputAdmin.value.trim().toLowerCase();
+        if (!searchTerm) {
+            filteredUsersAdmin = [...allUsers];
+        } else {
+            filteredUsersAdmin = allUsers.filter(user =>
+                user.name.toLowerCase().includes(searchTerm) || (user.username && user.username.toLowerCase().includes(searchTerm)) || (user.identifier && user.identifier.toLowerCase().includes(searchTerm))
+            );
+            // Add deleted students to search if term matches
+            studentData.forEach(student => {
+                const studentIdentifier = `Seat No: ${student["Seat No."]}`;
+                if (deletedStudentIdentifiers.includes(studentIdentifier) && student.Name.toLowerCase().includes(searchTerm)) {
+                    if (!filteredUsersAdmin.some(u => u.identifier === studentIdentifier)) { // Prevent duplicates
+                        filteredUsersAdmin.push({
+                            type: 'student',
+                            name: student.Name,
+                            identifier: studentIdentifier,
+                            deleted: true // Indicate it's a deleted student if needed
+                        });
+                    }
+                }
+            });
+        }
+        updateUserListDisplayAdmin(filteredUsersAdmin);
+    }
+
+
+    function deleteUserAdmin(userToDelete) {
+        if (userToDelete.type === 'newuser') {
+            let storedUsers = JSON.parse(localStorage.getItem('users')) || [];
+            storedUsers = storedUsers.filter(user => user.username !== userToDelete.username);
+            localStorage.setItem('users', JSON.stringify(storedUsers));
+            deleteUserSuccessElement.textContent = `User "${userToDelete.name}" deleted successfully.`;
+            deleteUserSuccessElement.style.display = 'block';
+        } else if (userToDelete.type === 'student') {
+            const studentIdentifier = `Seat No: ${userToDelete.identifier.split(': ')[1]}`;
+            if (!deletedStudentIdentifiers.includes(userToDelete.identifier)) {
+                deletedStudentIdentifiers.push(userToDelete.identifier);
+                localStorage.setItem('deletedStudents', JSON.stringify(deletedStudentIdentifiers));
+            }
+            deleteUserSuccessElement.textContent = `Student "${userToDelete.name}" (Seat No: ${studentIdentifier}) deleted.`;
+            deleteUserSuccessElement.style.display = 'block';
+        }
+        displayAllUsersAdmin();
+        setTimeout(() => {
+            deleteUserSuccessElement.style.display = 'none';
+        }, 3000);
+    }
+
+
+    document.querySelector('.signInButton').onclick = signIn;
+    document.getElementById('searchButton').onclick = searchResult;
+    document.getElementById('themeSwitcher').onclick = toggleTheme;
+    document.getElementById('signOutButton').onclick = signOut;
+    document.getElementById('homeButton').onclick = goToHome;
+    document.getElementById('addCommentButton').onclick = addComment;
+    document.querySelector('.signUpButton').onclick = signUp;
+    document.getElementById('sendMessageButton').onclick = sendMessage;
+    document.getElementById('recoverPasswordButton').onclick = recoverPassword;
+    document.getElementById('addNewUserButton').onclick = addNewUser;
+    document.getElementById('deleteUserButton').onclick = deleteUser;
+    document.getElementById('userSearchButtonAdmin').onclick = searchUsersAdmin;
+
+
+</script>
+</body>
+</html>
